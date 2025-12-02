@@ -1,0 +1,633 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cloud Notes</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            overflow: hidden;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 40px 30px;
+            text-align: center;
+        }
+        
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+        
+        .header p {
+            opacity: 0.9;
+            font-size: 1.1rem;
+        }
+        
+        .main-content {
+            padding: 30px;
+        }
+        
+        .card {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 25px;
+            margin-bottom: 30px;
+            border: 1px solid #e9ecef;
+        }
+        
+        h2 {
+            color: #495057;
+            margin-bottom: 20px;
+            font-size: 1.5rem;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 8px;
+            color: #495057;
+            font-weight: 500;
+        }
+        
+        input, textarea {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid #dee2e6;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: border-color 0.3s;
+            font-family: inherit;
+        }
+        
+        input:focus, textarea:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+        
+        textarea {
+            min-height: 120px;
+            resize: vertical;
+        }
+        
+        .btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+        }
+        
+        .btn:active {
+            transform: translateY(0);
+        }
+        
+        .btn-delete {
+            background: linear-gradient(135deg, #ff6b6b 0%, #ee5a52 100%);
+        }
+        
+        .btn-edit {
+            background: linear-gradient(135deg, #4ecdc4 0%, #44a08d 100%);
+        }
+        
+        .notes-list {
+            margin-top: 30px;
+        }
+        
+        .note {
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+            border-left: 4px solid #667eea;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        
+        .note:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+        }
+        
+        .note-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 15px;
+            border-bottom: 2px solid #f8f9fa;
+            padding-bottom: 10px;
+        }
+        
+        .note-header h3 {
+            color: #212529;
+            font-size: 1.3rem;
+            margin: 0;
+            flex: 1;
+        }
+        
+        .note-date {
+            color: #6c757d;
+            font-size: 0.9rem;
+            white-space: nowrap;
+        }
+        
+        .note-content {
+            color: #495057;
+            line-height: 1.7;
+            margin-bottom: 20px;
+            white-space: pre-wrap;
+        }
+        
+        .note-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+        }
+        
+        .note-actions button {
+            padding: 8px 16px;
+            font-size: 14px;
+        }
+        
+        .empty-state {
+            text-align: center;
+            padding: 40px 20px;
+            color: #6c757d;
+        }
+        
+        .empty-state h3 {
+            font-size: 1.5rem;
+            margin-bottom: 10px;
+            color: #495057;
+        }
+        
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 15px 20px;
+            border-radius: 8px;
+            color: white;
+            font-weight: 500;
+            z-index: 1000;
+            animation: slideIn 0.3s ease;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+        
+        @keyframes slideIn {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+        
+        .notification.success {
+            background: linear-gradient(135deg, #51cf66 0%, #40c057 100%);
+        }
+        
+        .notification.error {
+            background: linear-gradient(135deg, #ff6b6b 0%, #fa5252 100%);
+        }
+        
+        .notification.info {
+            background: linear-gradient(135deg, #339af0 0%, #228be6 100%);
+        }
+        
+        .loading {
+            text-align: center;
+            padding: 30px;
+            color: #6c757d;
+        }
+        
+        .loading-spinner {
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 15px;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        @media (max-width: 600px) {
+            body {
+                padding: 10px;
+            }
+            
+            .container {
+                border-radius: 10px;
+            }
+            
+            .header {
+                padding: 30px 20px;
+            }
+            
+            .header h1 {
+                font-size: 2rem;
+            }
+            
+            .main-content {
+                padding: 20px;
+            }
+            
+            .note-header {
+                flex-direction: column;
+                gap: 5px;
+            }
+            
+            .note-actions {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>☁️ Cloud Notes</h1>
+            <p>Ваше приложение для заметок в облаке Yandex Cloud</p>
+        </div>
+        
+        <div class="main-content">
+            <div class="card">
+                <h2>📝 Новая заметка</h2>
+                <form id="noteForm">
+                    <div class="form-group">
+                        <label for="title">Заголовок</label>
+                        <input type="text" id="title" placeholder="Введите заголовок заметки" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="content">Содержимое</label>
+                        <textarea id="content" placeholder="Введите текст заметки..."></textarea>
+                    </div>
+                    <button type="submit" class="btn">
+                        <span>💾 Создать заметку</span>
+                    </button>
+                </form>
+            </div>
+            
+            <div class="card">
+                <div class="notes-header">
+                    <h2>📋 Мои заметки</h2>
+                    <div style="display: flex; gap: 10px; margin-top: 10px;">
+                        <button onclick="loadNotes()" class="btn" style="padding: 8px 16px;">
+                            🔄 Обновить
+                        </button>
+                        <button onclick="checkHealth()" class="btn" style="padding: 8px 16px; background: linear-gradient(135deg, #20c997 0%, #12b886 100%);">
+                            🏥 Проверить сервер
+                        </button>
+                    </div>
+                </div>
+                
+                <div id="notesContainer" class="notes-list">
+                    <div class="loading">
+                        <div class="loading-spinner"></div>
+                        <p>Загрузка заметок...</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div style="text-align: center; padding: 20px; color: #6c757d; font-size: 14px; border-top: 1px solid #e9ecef;">
+            <p>Cloud Notes • CRUD приложение для Yandex Cloud • Все заметки хранятся в облачной базе данных</p>
+        </div>
+    </div>
+
+    <script>
+        // Конфигурация
+        const API_BASE_URL = 'http://localhost:5000/api';
+        let currentEditNoteId = null;
+        
+        // Инициализация
+        document.addEventListener('DOMContentLoaded', function() {
+            loadNotes();
+            setupForm();
+        });
+        
+        // Настройка формы
+        function setupForm() {
+            const form = document.getElementById('noteForm');
+            form.addEventListener('submit', async function(e) {
+                e.preventDefault();
+                
+                const title = document.getElementById('title').value.trim();
+                const content = document.getElementById('content').value.trim();
+                
+                if (currentEditNoteId) {
+                    await updateNote(currentEditNoteId, title, content);
+                } else {
+                    await createNote(title, content);
+                }
+            });
+        }
+        
+        // Уведомления
+        function showNotification(message, type = 'info') {
+            // Удаляем старые уведомления
+            const oldNotifications = document.querySelectorAll('.notification');
+            oldNotifications.forEach(n => n.remove());
+            
+            const notification = document.createElement('div');
+            notification.className = `notification ${type}`;
+            notification.textContent = message;
+            notification.style.cssText = `
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                padding: 15px 20px;
+                border-radius: 8px;
+                color: white;
+                font-weight: 500;
+                z-index: 1000;
+                animation: slideIn 0.3s ease;
+                box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+            `;
+            
+            // Добавляем стили для анимации
+            const style = document.createElement('style');
+            style.textContent = `
+                @keyframes slideIn {
+                    from { transform: translateX(100%); opacity: 0; }
+                    to { transform: translateX(0); opacity: 1; }
+                }
+            `;
+            document.head.appendChild(style);
+            
+            document.body.appendChild(notification);
+            
+            // Автоудаление через 5 секунд
+            setTimeout(() => {
+                notification.style.animation = 'slideIn 0.3s ease reverse';
+                setTimeout(() => notification.remove(), 300);
+            }, 5000);
+        }
+        
+        // Загрузка заметок
+        async function loadNotes() {
+            const container = document.getElementById('notesContainer');
+            container.innerHTML = `
+                <div class="loading">
+                    <div class="loading-spinner"></div>
+                    <p>Загрузка заметок...</p>
+                </div>
+            `;
+            
+            try {
+                const response = await fetch(`${API_BASE_URL}/notes`);
+                if (!response.ok) {
+                    throw new Error(`Ошибка сервера: ${response.status}`);
+                }
+                
+                const data = await response.json();
+                renderNotes(data.notes);
+                
+            } catch (error) {
+                console.error('Ошибка загрузки заметок:', error);
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <h3>😕 Ошибка загрузки</h3>
+                        <p>${error.message}</p>
+                        <button onclick="loadNotes()" class="btn" style="margin-top: 15px;">
+                            🔄 Повторить попытку
+                        </button>
+                    </div>
+                `;
+            }
+        }
+        
+        // Рендеринг заметок
+        function renderNotes(notes) {
+            const container = document.getElementById('notesContainer');
+            
+            if (!notes || notes.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <h3>📝 Пока нет заметок</h3>
+                        <p>Создайте свою первую заметку!</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            container.innerHTML = notes.map(note => {
+                const createdDate = new Date(note.created_at);
+                const updatedDate = new Date(note.updated_at);
+                const isEdited = createdDate.getTime() !== updatedDate.getTime();
+                
+                return `
+                    <div class="note" data-id="${note.id}">
+                        <div class="note-header">
+                            <h3>${escapeHtml(note.title)}</h3>
+                            <div class="note-date">
+                                ${createdDate.toLocaleDateString('ru-RU')}
+                                ${isEdited ? ' (изменено)' : ''}
+                            </div>
+                        </div>
+                        <div class="note-content">
+                            ${note.content ? escapeHtml(note.content).replace(/\\n/g, '<br>') : '<em>Нет содержимого</em>'}
+                        </div>
+                        <div class="note-actions">
+                            <button onclick="startEditNote(${note.id}, '${escapeHtml(note.title).replace(/'/g, "\\'")}', '${escapeHtml(note.content || '').replace(/'/g, "\\'").replace(/\\n/g, '\\\\n')}')" 
+                                    class="btn btn-edit">
+                                ✏️ Редактировать
+                            </button>
+                            <button onclick="deleteNote(${note.id})" 
+                                    class="btn btn-delete">
+                                🗑️ Удалить
+                            </button>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+        
+        // Создание заметки
+        async function createNote(title, content) {
+            if (!title) {
+                showNotification('Введите заголовок заметки', 'error');
+                return;
+            }
+            
+            try {
+                const response = await fetch(`${API_BASE_URL}/notes`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ title, content })
+                });
+                
+                const data = await response.json();
+                
+                if (!response.ok) {
+                    throw new Error(data.error || 'Ошибка создания заметки');
+                }
+                
+                showNotification('Заметка успешно создана!', 'success');
+                document.getElementById('title').value = '';
+                document.getElementById('content').value = '';
+                loadNotes();
+                
+            } catch (error) {
+                console.error('Ошибка создания заметки:', error);
+                showNotification(error.message, 'error');
+            }
+        }
+        
+        // Начало редактирования
+        function startEditNote(id, title, content) {
+            currentEditNoteId = id;
+            document.getElementById('title').value = title;
+            document.getElementById('content').value = content.replace(/\\\\n/g, '\\n');
+            
+            const formButton = document.querySelector('#noteForm button');
+            formButton.innerHTML = '<span>💾 Сохранить изменения</span>';
+            
+            showNotification('Режим редактирования. Измените текст и нажмите "Сохранить изменения"', 'info');
+            
+            // Прокрутка к форме
+            document.getElementById('title').scrollIntoView({ behavior: 'smooth' });
+            document.getElementById('title').focus();
+        }
+        
+        // Обновление заметки
+        async function updateNote(id, title, content) {
+            if (!title) {
+                showNotification('Введите заголовок заметки', 'error');
+                return;
+            }
+            
+            try {
+                const response = await fetch(`${API_BASE_URL}/notes/${id}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ title, content })
+                });
+                
+                const data = await response.json();
+                
+                if (!response.ok) {
+                    throw new Error(data.error || 'Ошибка обновления заметки');
+                }
+                
+                showNotification('Заметка успешно обновлена!', 'success');
+                
+                // Сброс формы
+                currentEditNoteId = null;
+                document.getElementById('title').value = '';
+                document.getElementById('content').value = '';
+                
+                const formButton = document.querySelector('#noteForm button');
+                formButton.innerHTML = '<span>💾 Создать заметку</span>';
+                
+                loadNotes();
+                
+            } catch (error) {
+                console.error('Ошибка обновления заметки:', error);
+                showNotification(error.message, 'error');
+            }
+        }
+        
+        // Удаление заметки
+        async function deleteNote(id) {
+            if (!confirm('Вы уверены, что хотите удалить эту заметку?')) {
+                return;
+            }
+            
+            try {
+                const response = await fetch(`${API_BASE_URL}/notes/${id}`, {
+                    method: 'DELETE'
+                });
+                
+                if (!response.ok) {
+                    const data = await response.json();
+                    throw new Error(data.error || 'Ошибка удаления заметки');
+                }
+                
+                showNotification('Заметка успешно удалена!', 'success');
+                loadNotes();
+                
+            } catch (error) {
+                console.error('Ошибка удаления заметки:', error);
+                showNotification(error.message, 'error');
+            }
+        }
+        
+        // Проверка здоровья сервера
+        async function checkHealth() {
+            try {
+                const response = await fetch('http://localhost:5000/health');
+                const data = await response.json();
+                
+                if (data.status === 'healthy') {
+                    showNotification('✅ Сервер работает нормально', 'success');
+                } else {
+                    showNotification('⚠️ Проблемы с сервером: ' + (data.error || 'неизвестная ошибка'), 'error');
+                }
+                
+            } catch (error) {
+                console.error('Ошибка проверки здоровья:', error);
+                showNotification('❌ Сервер не отвечает', 'error');
+            }
+        }
+        
+        // Экранирование HTML
+        function escapeHtml(text) {
+            if (!text) return '';
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+        
+        // Автообновление каждые 30 секунд
+        setInterval(loadNotes, 30000);
+    </script>
+</body>
+</html>

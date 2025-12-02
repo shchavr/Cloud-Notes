@@ -1,0 +1,78 @@
+version: '3.8'
+
+services:
+  # MySQL в Docker контейнере
+  mysql:
+    image: mysql:8.0
+    container_name: cloud-notes-mysql
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpassword
+      MYSQL_DATABASE: notes_db
+      MYSQL_USER: notes_user
+      MYSQL_PASSWORD: notes_password
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ./mysql/init.sql:/docker-entrypoint-initdb.d/init.sql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - notes-network
+    command: 
+      - --default-authentication-plugin=mysql_native_password
+      - --character-set-server=utf8mb4
+      - --collation-server=utf8mb4_unicode_ci
+
+  # Backend приложение
+  backend:
+    build: ./backend
+    container_name: cloud-notes-backend
+    restart: unless-stopped
+    ports:
+      - "5000:5000"
+    environment:
+      - FLASK_ENV=production
+      - DB_HOST=mysql
+      - DB_PORT=3306
+      - DB_NAME=notes_db
+      - DB_USER=root
+      - DB_PASSWORD=rootpassword
+    depends_on:
+      mysql:
+        condition: service_healthy
+    volumes:
+      - ./backend:/app
+    networks:
+      - notes-network
+    command: >
+      sh -c "python -c 'import time; time.sleep(10)' &&
+             python app.py"
+
+  # Nginx для фронтенда (опционально)
+  nginx:
+    image: nginx:alpine
+    container_name: cloud-notes-nginx
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf
+      - ./frontend:/usr/share/nginx/html
+    depends_on:
+      - backend
+    networks:
+      - notes-network
+
+volumes:
+  mysql_data:
+    driver: local
+
+networks:
+  notes-network:
+    driver: bridge
